@@ -1,0 +1,393 @@
+[
+    {
+        "id": "3d01a9dcdf340a9b",
+        "type": "tab",
+        "label": "Fluxo 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "50c598fde7c6d8be",
+        "type": "mongodb4-client",
+        "name": "ConectionMongoDB",
+        "protocol": "mongodb",
+        "hostname": "mongo",
+        "port": "27017",
+        "dbName": "iot-project",
+        "appName": "",
+        "authSource": "",
+        "authMechanism": "DEFAULT",
+        "tls": false,
+        "tlsCAFile": "",
+        "tlsCertificateKeyFile": "",
+        "tlsInsecure": false,
+        "connectTimeoutMS": "30000",
+        "socketTimeoutMS": "0",
+        "minPoolSize": "0",
+        "maxPoolSize": "100",
+        "maxIdleTimeMS": "0",
+        "uri": "",
+        "advanced": "{}",
+        "uriTabActive": "tab-uri-simple"
+    },
+    {
+        "id": "685f0aa9c0c1391b",
+        "type": "postgreSQLConfig",
+        "name": "",
+        "host": "postgres",
+        "hostFieldType": "str",
+        "port": 5432,
+        "portFieldType": "num",
+        "database": "iot",
+        "databaseFieldType": "str",
+        "ssl": "false",
+        "sslFieldType": "bool",
+        "applicationName": "",
+        "applicationNameType": "str",
+        "max": 10,
+        "maxFieldType": "num",
+        "idle": 1000,
+        "idleFieldType": "num",
+        "connectionTimeout": 10000,
+        "connectionTimeoutFieldType": "num",
+        "user": "admin",
+        "userFieldType": "str",
+        "password": "admin",
+        "passwordFieldType": "str"
+    },
+    {
+        "id": "aca1d27128245608",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "mosquitto",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "c710ccd2ac2ae728",
+        "type": "mongodb4",
+        "z": "3d01a9dcdf340a9b",
+        "clientNode": "50c598fde7c6d8be",
+        "mode": "collection",
+        "collection": "",
+        "operation": "",
+        "output": "toArray",
+        "maxTimeMS": "0",
+        "handleDocId": false,
+        "name": "",
+        "x": 750,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "288b16ddba8ce189",
+        "type": "postgresql",
+        "z": "3d01a9dcdf340a9b",
+        "name": "",
+        "query": "SELECT * FROM ;",
+        "postgreSQLConfig": "685f0aa9c0c1391b",
+        "split": false,
+        "rowsPerMsg": 1,
+        "outputs": 1,
+        "x": 910,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2825549e9ac39bb8",
+        "type": "mqtt in",
+        "z": "3d01a9dcdf340a9b",
+        "name": "",
+        "topic": "device/+/informacao",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "aca1d27128245608",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 230,
+        "y": 200,
+        "wires": [
+            [
+                "4c95e00c1a142cb5"
+            ]
+        ]
+    },
+    {
+        "id": "4c95e00c1a142cb5",
+        "type": "uuid",
+        "z": "3d01a9dcdf340a9b",
+        "uuidVersion": "v4",
+        "namespaceType": "",
+        "namespace": "",
+        "namespaceCustom": "",
+        "name": "",
+        "field": "payload._id",
+        "fieldType": "msg",
+        "x": 390,
+        "y": 200,
+        "wires": [
+            [
+                "0d2e2a524ac51d43"
+            ]
+        ]
+    },
+    {
+        "id": "0d2e2a524ac51d43",
+        "type": "function",
+        "z": "3d01a9dcdf340a9b",
+        "name": "function 1",
+        "func": "const deviceId = msg.payload.device_id;\nif (!deviceId) return null;\n\nmsg.collection = \"device\";\nmsg.operation = \"updateOne\";\n\nconst update = {\n    $set: {\n        device_id: deviceId,\n        ip: msg.payload.ip || null,\n        location: msg.payload.location || null,\n        update_at: new Date(),\n        status: {\n            last_info_ts: new Date(),\n        },\n        raw: JSON.stringify(msg.payload)\n    },\n    $setOnInsert: { created_at: new Date(), _id: msg.payload._id }\n}\n\nmsg.payload = [{ device_id: deviceId }, update, { upsert: true }];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 200,
+        "wires": [
+            [
+                "c710ccd2ac2ae728"
+            ]
+        ]
+    },
+    {
+        "id": "44254de97f722165",
+        "type": "mqtt in",
+        "z": "3d01a9dcdf340a9b",
+        "name": "",
+        "topic": "device/+/telemetria",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "aca1d27128245608",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 230,
+        "y": 320,
+        "wires": [
+            [
+                "f94f3102c21dedb8"
+            ]
+        ]
+    },
+    {
+        "id": "f94f3102c21dedb8",
+        "type": "uuid",
+        "z": "3d01a9dcdf340a9b",
+        "uuidVersion": "v4",
+        "namespaceType": "",
+        "namespace": "",
+        "namespaceCustom": "",
+        "name": "",
+        "field": "payload._id",
+        "fieldType": "msg",
+        "x": 410,
+        "y": 320,
+        "wires": [
+            [
+                "d5df3c8d0e1682e5"
+            ]
+        ]
+    },
+    {
+        "id": "55f0213d1a912026",
+        "type": "function",
+        "z": "3d01a9dcdf340a9b",
+        "name": "function 2",
+        "func": "const device_id = (msg.topic || '').split(\"/\")[1];\nif(!device_id) return null;\n\nconst obj = {\n    _id: msg.payload._id,\n    device_id,\n    value: msg.payload.value || null,\n    created_at: new Date(msg.payload.ts || Date.now()),\n    source: 'telemetry'\n}\n\nmsg.collection = 'reading'\nmsg.operation ='insertOne'\nmsg.payload = obj\n\nreturn msg",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 740,
+        "y": 280,
+        "wires": [
+            [
+                "ac55e4616ab221e3"
+            ]
+        ]
+    },
+    {
+        "id": "d5df3c8d0e1682e5",
+        "type": "switch",
+        "z": "3d01a9dcdf340a9b",
+        "name": "",
+        "property": "payload.value",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "lt",
+                "v": "5",
+                "vt": "num"
+            },
+            {
+                "t": "gte",
+                "v": "5",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 550,
+        "y": 320,
+        "wires": [
+            [
+                "55f0213d1a912026",
+                "281f7b48c45c1a58"
+            ],
+            [
+                "13ae1fe1003cd0a1",
+                "5f8f3bbea5df28a3"
+            ]
+        ]
+    },
+    {
+        "id": "ac55e4616ab221e3",
+        "type": "mongodb4",
+        "z": "3d01a9dcdf340a9b",
+        "clientNode": "50c598fde7c6d8be",
+        "mode": "collection",
+        "collection": "",
+        "operation": "",
+        "output": "toArray",
+        "maxTimeMS": "0",
+        "handleDocId": false,
+        "name": "",
+        "x": 890,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "13ae1fe1003cd0a1",
+        "type": "function",
+        "z": "3d01a9dcdf340a9b",
+        "name": "function 3",
+        "func": "var objeto = {};\n\nobjeto.query = `INSERT INTO alerta (id, temperature) VALUES ($1, $2)`;\nobjeto.params = [\n    msg.payload._id,\n    msg.payload.value\n]\n\nmsg = {};\nmsg = objeto;\n\nconst mqtt ={\n    topic: `device/${msg.payload_id}/cmd`,\n    payload: {\n        led: false\n    },\n    qos: 1,\n    retain: false\n}\nreturn [msg];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 440,
+        "wires": [
+            [
+                "288b16ddba8ce189"
+            ]
+        ]
+    },
+    {
+        "id": "e0dfae2a2daa1a12",
+        "type": "mqtt out",
+        "z": "3d01a9dcdf340a9b",
+        "name": "",
+        "topic": "",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "aca1d27128245608",
+        "x": 890,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "5f8f3bbea5df28a3",
+        "type": "function",
+        "z": "3d01a9dcdf340a9b",
+        "name": "function 4",
+        "func": "const id = msg.payload_id\n\nconst mqtt ={\n    topic: `device/${msg.payload.device_id}/alert`,\n    payload: {\n        led: true,\n        msg: msg.payload\n    },\n    qos: 1,\n    retain: false\n}\nreturn mqtt;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 500,
+        "wires": [
+            [
+                "e0dfae2a2daa1a12"
+            ]
+        ]
+    },
+    {
+        "id": "281f7b48c45c1a58",
+        "type": "function",
+        "z": "3d01a9dcdf340a9b",
+        "name": "function 5",
+        "func": "const id = msg.payload_id\n\nconst mqtt ={\n    topic: `device/${msg.payload.device_id}/alert`,\n    payload: {\n        led: false,\n        msg: msg.payload\n    },\n    qos: 1,\n    retain: false\n}\nreturn mqtt;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 740,
+        "y": 340,
+        "wires": [
+            [
+                "dd128794097735f8"
+            ]
+        ]
+    },
+    {
+        "id": "dd128794097735f8",
+        "type": "mqtt out",
+        "z": "3d01a9dcdf340a9b",
+        "name": "",
+        "topic": "",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "aca1d27128245608",
+        "x": 870,
+        "y": 340,
+        "wires": []
+    }
+]
